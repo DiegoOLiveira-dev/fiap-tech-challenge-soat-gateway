@@ -54,6 +54,40 @@ resource "aws_api_gateway_integration_response" "integration_response_200" {
   }
 }
 
+resource "aws_api_gateway_method" "post_method" {
+  rest_api_id   = aws_api_gateway_rest_api.my_api.id
+  resource_id   = aws_api_gateway_resource.my_resource.id
+  http_method   = "POST"
+  authorization = "COGNITO_USER_POOLS"
+  authorizer_id = aws_api_gateway_authorizer.my_authorizer.id
+}
+
+resource "aws_api_gateway_integration" "post_integration" {
+  rest_api_id             = aws_api_gateway_rest_api.my_api.id
+  resource_id             = aws_api_gateway_resource.my_resource.id
+  http_method             = "POST"
+  integration_http_method = "POST"
+  type                    = "AWS"
+  uri                     = var.oauthurl # ARN da função Lambda
+}
+
+resource "aws_api_gateway_method_response" "post_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.my_api.id
+  resource_id = aws_api_gateway_resource.my_resource.id
+  http_method = aws_api_gateway_method.post_method.http_method
+  status_code = "200"
+}
+
+resource "aws_api_gateway_integration_response" "post_integration_response_200" {
+  rest_api_id = aws_api_gateway_rest_api.my_api.id
+  resource_id = aws_api_gateway_resource.my_resource.id
+  http_method = aws_api_gateway_method.post_method.http_method
+  status_code = aws_api_gateway_method_response.post_response_200.status_code
+  response_templates = {
+    "application/json" = ""
+  }
+}
+
 resource "aws_api_gateway_deployment" "deployment" {
   depends_on = [
     aws_api_gateway_integration.my_integration,
